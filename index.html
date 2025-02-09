@@ -54,25 +54,24 @@
     <script>
 
     const initVideoCall =  async () => {
-       roomName = "test4";
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDkyMDE4LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwODg0MTgiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q0In19fQ.1vHk2NcJqVv6ug1hgb0s2Wr_xAoWE7LZGtAjMYhXCV0";
-       
-
-        try {
-            const room = await Twilio.Video.connect(token, {
-                name: roomName,
-                audio: { sampleRate: 16000 },
-                video: { width: 1280, height: 720 }
-            });
-
-            // Handle local participant
-            room.localParticipant.tracks.forEach(track => {
-                if (track.track && track.track.kind === 'video') {
-                    const localVideo = track.track.attach();
-                    /*localVideo.id = 'localvideo';*/
-                    document.getElementById('local-video').appendChild(localVideo);
-                }
-            });
+       roomName = "test6";
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDk4MDM0LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwOTQ0MzQiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q2In19fQ.L598MJoKh4sLpMSgrgULgSXJbwF41dJe4iEjneJSo1k";
+try {
+    const room = await Twilio.Video.connect(token, {
+        name: roomName,
+        audio: true,
+        video: { height: 720, frameRate: 24, width: 1280 },
+        bandwidthProfile: {
+            video: {
+                mode: 'collaboration',
+                dominantSpeakerPriority: 'high',
+            }
+        },
+        dominantSpeaker: true,
+        preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
+        networkQuality: { local: 1, remote: 1 }
+        
+    });
 
             // Handle remote participants
             room.on('participantConnected', participant => {
