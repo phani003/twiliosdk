@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twilio Video Call</title>
+    <style>
+        #video-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .participant {
+            width: 640px;
+            height: 480px;
+            border: 1px solid #ccc;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #local-video {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            height: 400px;
+            border: 2px solid blue;
+        }
+
+        .participant-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            height: 400px;
+            border: 2px solid blue;
+        }
+    </style>
+</head>
+<body>
+    <div align="center">
+        <div id="video-container">
+            <div id="local-video"></div>
+        </div>
+    </div>
+
+    
+
+    <script src="https://sdk.twilio.com/js/video/releases/2.29.0/twilio-video.min.js"></script>
+    <script>
+
+    const initVideoCall =  async () => {
+        roomName = "test3";
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDg4MjAzLCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwODQ2MDMiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3QzIn19fQ.09ExcNnhiwSAlE34YB6XwJHibSNqsKVFa-Z1Dtv5k68";
+
+
+        try {
+            const room = await Twilio.Video.connect(token, {
+                name: roomName,
+                audio: { sampleRate: 16000 },
+                video: { width: 1280, height: 720 }
+            });
+
+            // Handle local participant
+            room.localParticipant.tracks.forEach(track => {
+                if (track.track && track.track.kind === 'video') {
+                    const localVideo = track.track.attach();
+                    /*localVideo.id = 'localvideo';*/
+                    document.getElementById('local-video').appendChild(localVideo);
+                }
+            });
+
+            // Handle remote participants
+            room.on('participantConnected', participant => {
+                //const participantDiv = document.documentElementById('remote-video');
+                const participantDiv = document.createElement("div");
+                participantDiv.className = 'participant-box';
+                participantDiv.id = participant.sid;
+
+                participant.tracks.forEach(track => {
+                    track.on('subscribed', () => {
+                        const remoteVideo = track.track.attach();
+                        participantDiv.appendChild(remoteVideo);
+                    });
+                });
+
+                document.getElementById('video-container').appendChild(participantDiv);
+            });
+
+             //Handle disconnections
+            room.on('participantDisconnected', participant => {
+                const elem = document.getElementById(participant.sid);
+                if (elem) elem.remove();
+            });
+
+        } catch (error) {
+            console.error('Video connection failed:', error);
+            alert('Failed to connect to video room');
+        }
+    };
+
+    // Start call when page loads
+    window.addEventListener('DOMContentLoaded', initVideoCall);
+
+    
+    </script>
+</body>
+</html>
