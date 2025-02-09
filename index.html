@@ -1,38 +1,32 @@
-<!DOCTYPE html>
 <html>
 <head>
     <title>Twilio Video Call</title>
     <style>
         #video-container {
-            display: flex;
             flex-wrap: wrap;
             gap: 20px;
             padding: 20px;
         }
-
         .participant {
             width: 640px;
             height: 480px;
             border: 1px solid #ccc;
         }
-
         video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
         #local-video {
-            position: fixed;
+            
             top: 20px;
             right: 20px;
             width: 400px;
             height: 400px;
             border: 2px solid blue;
         }
-
         .participant-box {
-            position: fixed;
+            
             top: 20px;
             right: 20px;
             width: 400px;
@@ -44,56 +38,74 @@
 <body>
     <div align="center">
         <div id="video-container">
-            <div id="local-video"></div>
+           <div id="local-video"></div>
+                    
+            <div class="participant-box" id="remote-media-div"></div>
         </div>
     </div>
-
     
+    <%--<div align="center">
+        <button onclick="return startcall();">run</button>
+    </div>--%>
 
-    <script src="https://sdk.twilio.com/js/video/releases/2.29.0/twilio-video.min.js"></script>
-    <script>
+<script src="https://sdk.twilio.com/js/video/releases/2.29.0/twilio-video.min.js"></script>
+<script>
 
-    const initVideoCall =  async () => {
-       roomName = "test6";
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDk4MDM0LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwOTQ0MzQiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q2In19fQ.L598MJoKh4sLpMSgrgULgSXJbwF41dJe4iEjneJSo1k";
-try {
-    const room = await Twilio.Video.connect(token, {
-        name: roomName,
-        audio: true,
-        video: { height: 720, frameRate: 24, width: 1280 },
-        bandwidthProfile: {
-            video: {
-                mode: 'collaboration',
-                dominantSpeakerPriority: 'high',
-            }
-        },
-        dominantSpeaker: true,
-        preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
-        networkQuality: { local: 1, remote: 1 }
-        
-    });
+    const initVideoCall = async () => {
+
+        let roomName = "test6"; // Room name for the video call
+        let token = "YOUR_TWILIO_TOKEN"; // Replace with your actual Twilio token
+
+        roomName = "test6";
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDk4MDM0LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwOTQ0MzQiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q2In19fQ.L598MJoKh4sLpMSgrgULgSXJbwF41dJe4iEjneJSo1k";
+
+
+        try {
+            const room = await Twilio.Video.connect(token, {
+                name: roomName,
+                audio: true,
+                video: { height: 720, frameRate: 24, width: 1280 },
+                bandwidthProfile: {
+                    video: {
+                        mode: 'collaboration',
+                        dominantSpeakerPriority: 'high',
+                    }
+                },
+                dominantSpeaker: true,
+                preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
+                networkQuality: { local: 1, remote: 1 }
+            });
+
+            // Handle local participant
+            room.localParticipant.tracks.forEach(track => {
+                if (track.track && track.track.kind === 'video') {
+                    const localVideo = track.track.attach();
+                    localVideo.id = 'localvideo';
+                    document.getElementById('local-video').appendChild(localVideo);
+                }
+            });
 
             // Handle remote participants
             room.on('participantConnected', participant => {
-                //const participantDiv = document.documentElementById('remote-video');
-                const participantDiv = document.createElement("div");
-                participantDiv.className = 'participant-box';
-                participantDiv.id = participant.sid;
+                console.log(`Participant "${participant.identity}" connected`);
 
-                participant.tracks.forEach(track => {
-                    track.on('subscribed', () => {
-                        const remoteVideo = track.track.attach();
-                        participantDiv.appendChild(remoteVideo);
-                    });
+                participant.tracks.forEach(publication => {
+                    if (publication.isSubscribed) {
+                        const track = publication.track;
+                        document.getElementById('remote-media-div').appendChild(track.attach());
+                    }
                 });
 
-                document.getElementById('video-container').appendChild(participantDiv);
+                participant.on('trackSubscribed', track => {
+                    document.getElementById('remote-media-div').appendChild(track.attach());
+                });
             });
 
-             //Handle disconnections
+            // Handle disconnections
             room.on('participantDisconnected', participant => {
-                const elem = document.getElementById(participant.sid);
-                if (elem) elem.remove();
+                console.log(`Participant "${participant.identity}" disconnected`);
+                const remoteMediaDiv = document.getElementById('remote-media-div');
+                remoteMediaDiv.innerHTML = ''; // Clear remote video when participant disconnects
             });
 
         } catch (error) {
@@ -101,11 +113,108 @@ try {
             alert('Failed to connect to video room');
         }
     };
-
     // Start call when page loads
     window.addEventListener('DOMContentLoaded', initVideoCall);
 
-    
-    </script>
+    function startcall() {
+        let token = 'YOUR_TWILIO_TOKEN'; // Replace with your token
+        let roomName = 'your-room-name'; // Replace with your room name
+
+        roomName = "test4";
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDkyMDE4LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwODg0MTgiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q0In19fQ.1vHk2NcJqVv6ug1hgb0s2Wr_xAoWE7LZGtAjMYhXCV0";
+
+
+        // Connect to the video room
+        Twilio.Video.connect(token, {
+            name: roomName,
+            audio: true,
+            video: { width: 640 }
+        }).then(room => {
+            console.log(`Connected to Room: ${room.name}`);
+
+            // Handle local participant
+            const localParticipant = room.localParticipant;
+            handleParticipant(localParticipant, true);
+
+            // Handle existing participants
+            room.participants.forEach(participant => {
+                handleParticipant(participant);
+            });
+
+            // Handle new participants
+            room.on('participantConnected', participant => {
+                handleParticipant(participant);
+            });
+
+            // Handle participant disconnections
+            room.on('participantDisconnected', participant => {
+                removeParticipant(participant);
+            });
+
+            // Handle room disconnection
+            room.once('disconnected', reason => {
+                console.log(`Disconnected: ${reason}`);
+                room.participants.forEach(removeParticipant);
+            });
+
+        }).catch(error => {
+            console.error('Connection Error:', error);
+        });
+        return false;
+    }
+
+   
+
+    function handleParticipant(participant, isLocal = false) {
+        const container = isLocal ?
+            document.getElementById('local-video') :
+            createParticipantContainer(participant);
+
+        // Add existing tracks
+        participant.tracks.forEach(publication => {
+            if (publication.track) {
+                addTrack(container, publication.track, isLocal);
+            }
+        });
+
+        // Add new tracks when published
+        participant.on('trackSubscribed', track => {
+            addTrack(container, track, isLocal);
+        });
+
+        // Remove tracks when unpublished
+        participant.on('trackUnsubscribed', track => {
+            removeTrack(container, track);
+        });
+    }
+
+    function createParticipantContainer(participant) {
+        const div = document.createElement('div');
+        div.id = participant.sid;
+        div.className = 'participant';
+        div.innerHTML = `<p>${participant.identity}</p>`;
+        document.getElementById('video-container').appendChild(div);
+        return div;
+    }
+
+    function addTrack(container, track, isLocal) {
+        const mediaElement = track.attach();
+        if (isLocal) {
+            mediaElement.muted = true;
+        }
+        container.appendChild(mediaElement);
+    }
+
+    function removeTrack(container, track) {
+        track.detach().forEach(element => element.remove());
+    }
+
+    function removeParticipant(participant) {
+        const container = document.getElementById(participant.sid);
+        if (container) {
+            container.remove();
+        }
+    }
+</script>
 </body>
 </html>
