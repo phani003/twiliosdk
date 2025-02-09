@@ -1,220 +1,68 @@
 <html>
+
 <head>
-    <title>Twilio Video Call</title>
     <style>
-        #video-container {
-            flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
-        }
-        .participant {
-            width: 640px;
-            height: 480px;
-            border: 1px solid #ccc;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        #local-video {
-            
-            top: 20px;
-            right: 20px;
-            width: 400px;
-            height: 400px;
-            border: 2px solid blue;
-        }
-        .participant-box {
-            
-            top: 20px;
-            right: 20px;
-            width: 400px;
-            height: 400px;
-            border: 2px solid blue;
-        }
+        #root {
+            width: 100vw;
+            height: 100vh;
+            }
     </style>
 </head>
+
+
 <body>
-    <div align="center">
-        <div id="video-container">
-           <div id="local-video"></div>
-                    
-            <div class="participant-box" id="remote-media-div"></div>
-        </div>
-    </div>
-    
-    <%--<div align="center">
-        <button onclick="return startcall();">run</button>
-    </div>--%>
-
-<script src="https://sdk.twilio.com/js/video/releases/2.29.0/twilio-video.min.js"></script>
-<script>
-
-    const initVideoCall = async () => {
-
-        let roomName = "test6"; // Room name for the video call
-        let token = "YOUR_TWILIO_TOKEN"; // Replace with your actual Twilio token
-
-        roomName = "test7";
-         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MTAyMzM1LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwOTg3MzUiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q3In19fQ.0drZ8Tp7NS6V2Uqdsmljq9wLMwU5bPmuyFB6WByQPF8";
-
-
-        try {
-            const room = await Twilio.Video.connect(token, {
-                name: roomName,
-                audio: true,
-                video: { height: 720, frameRate: 24, width: 1280 },
-                bandwidthProfile: {
-                    video: {
-                        mode: 'collaboration',
-                        dominantSpeakerPriority: 'high',
-                    }
-                },
-                dominantSpeaker: true,
-                preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
-                networkQuality: { local: 1, remote: 1 }
-            });
-
-            // Handle local participant
-            room.localParticipant.tracks.forEach(track => {
-                if (track.track && track.track.kind === 'video') {
-                    const localVideo = track.track.attach();
-                    localVideo.id = 'localvideo';
-                    document.getElementById('local-video').appendChild(localVideo);
-                }
-            });
-
-            // Handle remote participants
-            room.on('participantConnected', participant => {
-                console.log(`Participant "${participant.identity}" connected`);
-
-                participant.tracks.forEach(publication => {
-                    if (publication.isSubscribed) {
-                        const track = publication.track;
-                        document.getElementById('remote-media-div').appendChild(track.attach());
-                    }
-                });
-
-                participant.on('trackSubscribed', track => {
-                    document.getElementById('remote-media-div').appendChild(track.attach());
-                });
-            });
-
-            // Handle disconnections
-            room.on('participantDisconnected', participant => {
-                console.log(`Participant "${participant.identity}" disconnected`);
-                const remoteMediaDiv = document.getElementById('remote-media-div');
-                remoteMediaDiv.innerHTML = ''; // Clear remote video when participant disconnects
-            });
-
-        } catch (error) {
-            console.error('Video connection failed:', error);
-            alert('Failed to connect to video room');
-        }
-    };
-    // Start call when page loads
-    window.addEventListener('DOMContentLoaded', initVideoCall);
-
-    function startcall() {
-        let token = 'YOUR_TWILIO_TOKEN'; // Replace with your token
-        let roomName = 'your-room-name'; // Replace with your room name
-
-        roomName = "test4";
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJpc3MiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyIiwiZXhwIjoxNzM5MDkyMDE4LCJqdGkiOiJTSzRmNDA1ZTQ1MGE3ODYwY2VjNmNjMzY1ZjUyNjJlZWEyLTE3MzkwODg0MTgiLCJzdWIiOiJBQzVlYzQ1YzgxZTZjMmY3NzNkMjY5ZGEwNjEwMGQ3MmEwIiwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiUEhBTklWIiwidmlkZW8iOnsicm9vbSI6InRlc3Q0In19fQ.1vHk2NcJqVv6ug1hgb0s2Wr_xAoWE7LZGtAjMYhXCV0";
-
-
-        // Connect to the video room
-        Twilio.Video.connect(token, {
-            name: roomName,
-            audio: true,
-            video: { width: 640 }
-        }).then(room => {
-            console.log(`Connected to Room: ${room.name}`);
-
-            // Handle local participant
-            const localParticipant = room.localParticipant;
-            handleParticipant(localParticipant, true);
-
-            // Handle existing participants
-            room.participants.forEach(participant => {
-                handleParticipant(participant);
-            });
-
-            // Handle new participants
-            room.on('participantConnected', participant => {
-                handleParticipant(participant);
-            });
-
-            // Handle participant disconnections
-            room.on('participantDisconnected', participant => {
-                removeParticipant(participant);
-            });
-
-            // Handle room disconnection
-            room.once('disconnected', reason => {
-                console.log(`Disconnected: ${reason}`);
-                room.participants.forEach(removeParticipant);
-            });
-
-        }).catch(error => {
-            console.error('Connection Error:', error);
-        });
-        return false;
-    }
-
-   
-
-    function handleParticipant(participant, isLocal = false) {
-        const container = isLocal ?
-            document.getElementById('local-video') :
-            createParticipantContainer(participant);
-
-        // Add existing tracks
-        participant.tracks.forEach(publication => {
-            if (publication.track) {
-                addTrack(container, publication.track, isLocal);
-            }
-        });
-
-        // Add new tracks when published
-        participant.on('trackSubscribed', track => {
-            addTrack(container, track, isLocal);
-        });
-
-        // Remove tracks when unpublished
-        participant.on('trackUnsubscribed', track => {
-            removeTrack(container, track);
-        });
-    }
-
-    function createParticipantContainer(participant) {
-        const div = document.createElement('div');
-        div.id = participant.sid;
-        div.className = 'participant';
-        div.innerHTML = `<p>${participant.identity}</p>`;
-        document.getElementById('video-container').appendChild(div);
-        return div;
-    }
-
-    function addTrack(container, track, isLocal) {
-        const mediaElement = track.attach();
-        if (isLocal) {
-            mediaElement.muted = true;
-        }
-        container.appendChild(mediaElement);
-    }
-
-    function removeTrack(container, track) {
-        track.detach().forEach(element => element.remove());
-    }
-
-    function removeParticipant(participant) {
-        const container = document.getElementById(participant.sid);
-        if (container) {
-            container.remove();
-        }
-    }
-</script>
+    <div id="root"></div>
 </body>
+<script src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js"></script>
+<script>
+window.onload = function () {
+    function getUrlParams(url) {
+        let urlStr = url.split('?')[1];
+        const urlSearchParams = new URLSearchParams(urlStr);
+        const result = Object.fromEntries(urlSearchParams.entries());
+        return result;
+    }
+
+
+        // Generate a Token by calling a method.
+        // @param 1: appID
+        // @param 2: serverSecret
+        // @param 3: Room ID
+        // @param 4: User ID
+        // @param 5: Username
+    const roomID = getUrlParams(window.location.href)['roomID'] || (Math.floor(Math.random() * 10000) + "");
+    const userID = Math.floor(Math.random() * 10000) + "";
+    const userName = "userName" + userID;
+    const appID = 883607502;
+    const serverSecret = "dbbee2f69387f2cff033fb79ff529e0b";
+    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(appID, serverSecret, roomID, userID, userName);
+
+    
+        const zp = ZegoUIKitPrebuilt.create(kitToken);
+        zp.joinRoom({
+            container: document.querySelector("#root"),
+            sharedLinks: [{
+                name: 'Personal link',
+                url: window.location.protocol + '//' + window.location.host  + window.location.pathname + '?roomID=' + roomID,
+            }],
+            scenario: {
+                mode: ZegoUIKitPrebuilt.VideoConference,
+            },
+                
+           	turnOnMicrophoneWhenJoining: true,
+           	turnOnCameraWhenJoining: true,
+           	showMyCameraToggleButton: true,
+           	showMyMicrophoneToggleButton: true,
+           	showAudioVideoSettingsButton: true,
+           	showScreenSharingButton: true,
+           	showTextChat: true,
+           	showUserList: true,
+           	maxUsers: 2,
+           	layout: "Auto",
+           	showLayoutButton: false,
+         
+            });
+}
+</script>
+
 </html>
